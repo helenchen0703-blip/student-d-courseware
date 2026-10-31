@@ -1,0 +1,746 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hero Quest · Sat</title>
+<style>
+:root{
+  --bg:#141826; --bg2:#1d2236; --ink:#F4F1EA; --soft:#B9BED0; --gold:#F2B33D;
+  --blue:#3D8BFD; --orange:#FF8A3D; --green:#3CC47C; --red:#F0546A;
+  --panel:rgba(20,24,38,.88); --line:rgba(255,255,255,.14);
+}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font:16px/1.5 "Avenir Next","Nunito",-apple-system,"PingFang SC",sans-serif;overflow:hidden}
+button{font:inherit;cursor:pointer;border:0}
+.arena{position:fixed;inset:0;background:
+  radial-gradient(ellipse at 50% 115%,rgba(242,179,61,.28),transparent 55%),
+  radial-gradient(ellipse at 15% 0%,rgba(61,139,253,.22),transparent 50%),
+  radial-gradient(ellipse at 90% 10%,rgba(240,84,106,.18),transparent 45%),
+  linear-gradient(180deg,#10131f,#1b2033 60%,#231d1a)}
+/* court lines */
+.arena svg{position:absolute;inset:0;width:100%;height:100%;opacity:.13}
+.view{position:fixed;inset:0;display:none}
+.view.on{display:block}
+
+/* ---------- hub ---------- */
+.top{position:absolute;top:22px;left:0;right:0;text-align:center}
+.top h1{font-size:clamp(28px,4vw,48px);letter-spacing:1px;text-shadow:0 4px 20px rgba(0,0,0,.5)}
+.top h1 b{color:var(--gold)}
+.top p{color:var(--soft);font-size:15px}
+.fan{position:absolute;left:50%;top:52%;width:0;height:0}
+.card{position:absolute;width:170px;height:236px;left:-85px;top:-150px;border-radius:22px;border:5px solid #fff;
+  box-shadow:0 14px 34px rgba(0,0,0,.45);transform-origin:50% 100%;transition:transform .35s cubic-bezier(.2,.9,.3,1.3),box-shadow .3s;
+  display:flex;flex-direction:column;align-items:center;padding:12px 10px;color:#fff;text-align:center;overflow:hidden}
+.card:hover,.card.sel{z-index:20;box-shadow:0 22px 50px rgba(0,0,0,.6),0 0 0 4px var(--gold)}
+.card .no{align-self:flex-start;font-weight:800;font-size:26px;line-height:1}
+.card .emb{width:86px;height:86px;margin:2px 0 4px;filter:drop-shadow(0 4px 6px rgba(0,0,0,.3))}
+.card h3{font-size:21px;line-height:1.1;font-weight:800;text-shadow:0 2px 0 rgba(0,0,0,.25)}
+.card .tm{font-size:14px;opacity:.95;margin-top:3px}
+.card .hero{font-size:12px;opacity:.85;letter-spacing:.5px}
+.card .done{position:absolute;top:8px;right:10px;font-size:22px;display:none}
+.card.isdone .done{display:block}
+.c1{background:linear-gradient(160deg,#FF8A5B,#E2553A)}
+.c2{background:linear-gradient(160deg,#A77BEA,#6C48C9)}
+.c3{background:linear-gradient(160deg,#F25C8A,#C3366A)}
+.c4{background:linear-gradient(160deg,#F2B33D,#C98A1A)}
+.c5{background:linear-gradient(160deg,#3CC4B4,#1F8F8A)}
+.c6{background:linear-gradient(160deg,#4FA3F2,#2C6CC4)}
+.c7{background:linear-gradient(160deg,#6CC24A,#3E8B2C)}
+.c8{background:linear-gradient(160deg,#F5C842,#E09B1E)}
+.info{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);width:min(980px,calc(100% - 32px));
+  background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:14px 18px;display:flex;gap:16px;align-items:center;backdrop-filter:blur(8px)}
+.info .ic{width:66px;height:66px;border-radius:16px;flex:none;display:grid;place-items:center}
+.info .ic svg{width:52px;height:52px}
+.info h2{font-size:24px}
+.info p{color:var(--soft);font-size:14px}
+.info .grow{flex:1;min-width:0}
+.go{background:var(--gold);color:#2a1d05;font-weight:800;font-size:20px;padding:12px 22px;border-radius:14px;white-space:nowrap}
+.go:hover{filter:brightness(1.08)}
+.decks{display:inline-flex;gap:6px;margin-top:8px;background:rgba(0,0,0,.3);padding:5px;border-radius:999px}
+.decks button{padding:6px 16px;border-radius:999px;background:transparent;color:var(--soft);font-weight:800}
+.decks button.on{background:var(--gold);color:#2a1d05}
+.card.off{display:none}
+.cb1{background:linear-gradient(160deg,#FF7A7A,#C93F55)}
+.cb2{background:linear-gradient(160deg,#5ED1E8,#2A8FB8)}
+.cb3{background:linear-gradient(160deg,#B28DFF,#7A52D6)}
+.cb4{background:linear-gradient(160deg,#FFB65C,#E07A1F)}
+.cb5{background:linear-gradient(160deg,#5A6378,#252B3B)}
+.film{width:100%;max-height:62vh;border-radius:14px;background:#000;display:block}
+.fzb.got{background:rgba(60,196,124,.35);border-color:var(--green)}
+/* forge */
+.chips{display:flex;flex-wrap:wrap;gap:10px}
+.chip{padding:10px 16px;border-radius:14px;font-size:22px;font-weight:800;background:rgba(61,139,253,.18);border:2px solid #7DB6FF;color:#CFE3FF}
+.chip.s{background:rgba(255,138,61,.18);border-color:#FFA463;color:#FFD9BF}
+.chip.pick{outline:4px solid var(--gold)}
+.chip.used{opacity:.35}
+.anvil{min-height:90px;display:flex;align-items:center;justify-content:center;gap:4px;font-size:clamp(34px,5vw,56px);font-weight:900;margin:14px 0;border-radius:18px;background:rgba(0,0,0,.25)}
+.anvil.bad{animation:shake .35s}
+.forged{display:flex;flex-wrap:wrap;gap:8px}
+.forged span{padding:4px 12px;border-radius:999px;background:rgba(60,196,124,.2);font-weight:800}
+/* memory */
+.mem{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;perspective:900px}
+.mc{height:120px;position:relative;transform-style:preserve-3d;transition:transform .45s;cursor:pointer}
+.mc.up,.mc.got{transform:rotateY(180deg)}
+.mc>div{position:absolute;inset:0;border-radius:14px;display:grid;place-items:center;backface-visibility:hidden;font-weight:800;font-size:20px;text-align:center;padding:6px}
+.mc .bk{background:linear-gradient(160deg,#5ED1E8,#2A8FB8);border:3px solid #fff}
+.mc .fr{background:#232a42;border:3px solid var(--line);transform:rotateY(180deg)}
+.mc.got .fr{border-color:var(--green);background:rgba(60,196,124,.2)}
+.mc .fr svg{width:100%;height:100%}
+/* quick draw / adverb */
+.qa{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}
+.qa button{padding:16px 8px;font-size:22px;font-weight:800;border-radius:14px;background:rgba(255,255,255,.08);color:var(--ink);border:2px solid var(--line)}
+.qa button.right{background:rgba(60,196,124,.3);border-color:var(--green)}
+.qa button.wrong{background:rgba(240,84,106,.25);border-color:var(--red);animation:shake .35s}
+.tbar{height:10px;background:rgba(255,255,255,.1);border-radius:6px;overflow:hidden;margin-top:10px}
+.tbar i{display:block;height:100%;background:var(--gold);width:100%}
+.sent{font-size:clamp(26px,3.6vw,42px);font-weight:800;line-height:1.35;margin:10px 0}
+.sent .gap{display:inline-block;min-width:150px;border-bottom:4px solid var(--gold);color:var(--gold);text-align:center}
+
+/* ---------- round ---------- */
+.round{position:absolute;inset:16px;display:flex;flex-direction:column;gap:12px}
+.rhead{display:flex;align-items:center;gap:14px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:10px 14px}
+.rhead .ic{width:54px;height:54px;border-radius:14px;display:grid;place-items:center;flex:none}
+.rhead .ic svg{width:42px;height:42px}
+.rhead h2{font-size:26px;line-height:1.1}
+.rhead p{color:var(--soft);font-size:14px}
+.rhead .grow{flex:1}
+.btn{background:rgba(255,255,255,.1);color:var(--ink);padding:9px 14px;border-radius:12px;border:1px solid var(--line);font-weight:700}
+.btn:hover{background:rgba(255,255,255,.18)}
+.btn.gold{background:var(--gold);color:#2a1d05;border:0}
+.rbody{flex:1;min-height:0;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px}
+.rfoot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:10px 14px;font-size:14px}
+.rfoot .lbl{color:var(--soft)}
+.sup{display:flex;gap:6px}
+.sup button{width:40px;height:36px;border-radius:10px;background:rgba(255,255,255,.08);color:var(--ink);font-weight:800;border:1px solid var(--line)}
+.sup button.on{background:var(--gold);color:#2a1d05}
+.notes{display:none;background:#fff8ea;color:#3a2a10;border-radius:14px;padding:12px 16px;font-size:14.5px;line-height:1.6}
+.notes.on{display:block}
+.notes b{color:#a0520f}
+
+/* shared bits */
+.big{font-size:clamp(26px,3.4vw,40px);font-weight:800;line-height:1.25}
+.q{font-size:clamp(24px,3vw,34px);font-weight:800}
+.frame{display:inline-block;background:rgba(242,179,61,.14);border:2px dashed var(--gold);border-radius:14px;padding:10px 16px;font-size:clamp(20px,2.4vw,28px);margin:6px 0}
+.blank{display:inline-block;min-width:120px;border-bottom:3px solid var(--gold)}
+.grid{display:grid;gap:14px}
+.tile{background:rgba(255,255,255,.07);border:2px solid var(--line);border-radius:16px;padding:14px;text-align:center;transition:transform .2s,border-color .2s,background .2s}
+.tile:hover{transform:translateY(-3px)}
+.tile.pick{border-color:var(--gold);background:rgba(242,179,61,.15)}
+.step{display:flex;gap:14px;align-items:flex-start;margin:12px 0;opacity:.35;transition:opacity .3s}
+.step.on{opacity:1}
+.step .n{flex:none;width:44px;height:44px;border-radius:50%;background:var(--blue);display:grid;place-items:center;font-weight:800;font-size:20px}
+.hide{display:none!important}
+.pop{animation:pop .45s cubic-bezier(.2,.9,.3,1.5)}
+@keyframes pop{0%{transform:scale(.6);opacity:0}100%{transform:scale(1);opacity:1}}
+.root{color:#7DB6FF}
+.suf{color:#FFA463}
+.small{font-size:13px;color:var(--soft)}
+
+/* words */
+.wrow{display:grid;grid-template-columns:1fr 60px 1.4fr;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.word{font-size:clamp(24px,3vw,36px);font-weight:800;letter-spacing:1px;cursor:pointer;border-radius:10px;padding:2px 8px;display:inline-flex;align-items:center;gap:8px}
+.word.ok{background:rgba(60,196,124,.22)}
+.word.no{background:rgba(240,84,106,.18)}
+.word .cut{display:inline-block;width:0;overflow:hidden;color:#fff;transition:width .3s}
+.split .word .cut{width:.5em}
+.part{display:inline-block;transition:transform .35s,color .35s}
+.split .part.r{color:#7DB6FF;transform:translateX(-4px)}
+.split .part.s{color:#FFA463;transform:translateX(6px)}
+.arrow{color:var(--soft);font-size:26px;text-align:center}
+.score{font-size:22px;font-weight:800}
+.score b{color:var(--gold);font-size:30px}
+
+/* angles */
+.figs{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.fig{cursor:pointer;position:relative}
+.fig svg{width:100%;height:110px}
+.fig .lt{position:absolute;top:8px;left:12px;font-weight:800;font-size:20px;color:var(--gold)}
+.fig.right{border-color:var(--green);background:rgba(60,196,124,.18)}
+.fig.wrong{border-color:var(--red);animation:shake .35s}
+.fig.glow{border-color:var(--gold);box-shadow:0 0 0 4px rgba(242,179,61,.4)}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.say{font-size:clamp(30px,4vw,48px);font-weight:800;color:var(--gold);min-height:1.3em}
+.dial{display:grid;grid-template-columns:minmax(260px,1.1fr) 1fr;gap:22px;align-items:center}
+.dial svg{width:100%;max-height:58vh}
+input[type=range]{width:100%;accent-color:var(--gold);height:30px}
+.deg{font-size:clamp(40px,6vw,72px);font-weight:900;color:var(--gold);line-height:1}
+.aname{font-size:clamp(26px,3.4vw,40px);font-weight:800;min-height:1.3em}
+
+/* break */
+.timer{font-size:clamp(60px,10vw,120px);font-weight:900;color:var(--gold);text-align:center;line-height:1}
+.court{width:100%;height:46vh;display:block;cursor:crosshair}
+
+/* oath */
+.rules{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.rule{transform:rotateY(90deg);transition:transform .5s;text-align:left}
+.rule.on{transform:none}
+.rule h4{font-size:22px;margin-bottom:4px}
+.stamp{display:inline-block;border:5px solid var(--red);color:var(--red);font-weight:900;font-size:34px;padding:4px 18px;border-radius:12px;transform:rotate(-12deg);margin-left:12px}
+.agenda{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.agenda span{padding:4px 10px;border-radius:999px;font-size:14px;font-weight:700}
+
+/* level up */
+.bars{display:grid;grid-template-columns:150px 1fr 70px;gap:10px 14px;align-items:center;font-size:18px}
+.bar{height:30px;background:rgba(255,255,255,.08);border-radius:10px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;border-radius:10px;transition:width 1.2s cubic-bezier(.2,.9,.3,1)}
+.num{width:64px;padding:6px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.08);color:var(--ink);font:inherit;font-weight:800;text-align:center}
+textarea{width:100%;min-height:140px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--ink);font:14px/1.6 -apple-system,"PingFang SC",sans-serif;padding:10px}
+.tips{position:fixed;right:18px;top:16px;color:var(--soft);font-size:12.5px}
+@media (max-width:760px){
+  .mem{grid-template-columns:repeat(3,1fr)}.qa{grid-template-columns:1fr 1fr}
+  .card{width:120px;height:170px;left:-60px;top:-110px;border-width:4px;padding:8px}
+  .card .emb{width:56px;height:56px}.card h3{font-size:15px}.card .no{font-size:18px}
+  .dial{grid-template-columns:1fr}.info{flex-wrap:wrap}.tips{display:none}
+  .wrow{grid-template-columns:1fr 30px 1.2fr}
+}
+</style>
+</head>
+<body>
+<div class="arena">
+  <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <g fill="none" stroke="#fff" stroke-width="5">
+      <rect x="40" y="40" width="1520" height="820" rx="10"/>
+      <line x1="800" y1="40" x2="800" y2="860"/>
+      <circle cx="800" cy="450" r="110"/>
+      <path d="M40 250 h260 v400 h-260"/><path d="M1560 250 h-260 v400 h260"/>
+      <path d="M40 120 a420 420 0 0 1 0 660"/><path d="M1560 120 a420 420 0 0 0 0 660"/>
+    </g>
+  </svg>
+</div>
+
+<!-- ================= HUB ================= -->
+<section class="view on" id="hub">
+  <div class="top">
+    <h1>Hero <b>Quest</b> · Saturday</h1>
+    <p>8 rounds · 6:30 – 8:00 · pick a card</p>
+    <div class="decks"><button class="on" data-d="main">Main Quest</button><button data-d="bonus">Bonus · Word Power</button></div>
+  </div>
+  <div class="fan" id="fan"></div>
+  <div class="info">
+    <div class="ic" id="infoIc"></div>
+    <div class="grow">
+      <h2 id="infoT"></h2>
+      <p id="infoD"></p>
+    </div>
+    <button class="go" id="goBtn">Enter →</button>
+  </div>
+  <div class="tips">← → choose · Enter open · B 切换 Bonus · N 老师备注</div>
+</section>
+
+<!-- ================= ROUND ================= -->
+<section class="view" id="roundView">
+  <div class="round">
+    <div class="rhead">
+      <div class="ic" id="rIc"></div>
+      <div class="grow"><h2 id="rT"></h2><p id="rD"></p></div>
+      <button class="btn" id="notesBtn">N 备注</button>
+      <button class="btn gold" id="doneBtn">★ Done</button>
+      <button class="btn" id="backBtn">Cards</button>
+    </div>
+    <div class="notes" id="notes"></div>
+    <div class="rbody" id="rBody"></div>
+    <div class="rfoot">
+      <span class="lbl">支持程度（3 = 帮助很多 · 0 = 独立）</span>
+      <div class="sup" id="sup"></div>
+      <span class="lbl" id="supHint"></span>
+    </div>
+  </div>
+</section>
+
+<script>
+/* ---------- emblems (original drawings) ---------- */
+const E = {
+  peach:`<svg viewBox="0 0 100 100"><g transform="translate(50 52)">${[0,72,144,216,288].map(a=>`<ellipse rx="15" ry="25" cy="-20" fill="#FFD1DC" stroke="#fff" stroke-width="3" transform="rotate(${a})"/>`).join('')}<circle r="11" fill="#F2B33D" stroke="#fff" stroke-width="3"/></g></svg>`,
+  fan:`<svg viewBox="0 0 100 100"><path d="M50 88 L12 30 Q50 2 88 30 Z" fill="#fff"/><g stroke="#C7B9F0" stroke-width="3">${[-36,-18,0,18,36].map(a=>`<line x1="50" y1="86" x2="50" y2="18" transform="rotate(${a} 50 86)"/>`).join('')}</g><rect x="44" y="80" width="12" height="16" rx="4" fill="#7A4E2D"/></svg>`,
+  blade:`<svg viewBox="0 0 100 100"><line x1="22" y1="92" x2="70" y2="20" stroke="#7A4E2D" stroke-width="7" stroke-linecap="round"/><path d="M62 30 Q92 10 84 50 Q78 38 62 30Z" fill="#E8F1FF" stroke="#fff" stroke-width="3"/><circle cx="66" cy="27" r="6" fill="#3CC47C"/></svg>`,
+  spear:`<svg viewBox="0 0 100 100"><line x1="14" y1="90" x2="78" y2="20" stroke="#7A4E2D" stroke-width="6" stroke-linecap="round"/><path d="M74 24 L92 6 L86 32 Z" fill="#E8F1FF" stroke="#fff" stroke-width="3"/><circle cx="35" cy="66" r="13" fill="none" stroke="#fff" stroke-width="5"/><line x1="44" y1="76" x2="56" y2="88" stroke="#fff" stroke-width="6" stroke-linecap="round"/></svg>`,
+  ball:`<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="38" fill="#FF8A3D" stroke="#fff" stroke-width="4"/><g fill="none" stroke="#5a2a08" stroke-width="3.5"><line x1="12" y1="50" x2="88" y2="50"/><line x1="50" y1="12" x2="50" y2="88"/><path d="M24 22 Q42 50 24 78"/><path d="M76 22 Q58 50 76 78"/></g></svg>`,
+  bow:`<svg viewBox="0 0 100 100"><path d="M30 10 Q85 50 30 90" fill="none" stroke="#7A4E2D" stroke-width="7" stroke-linecap="round"/><line x1="30" y1="10" x2="30" y2="90" stroke="#fff" stroke-width="2.5"/><line x1="14" y1="50" x2="88" y2="50" stroke="#fff" stroke-width="4"/><path d="M90 50 L78 42 L78 58Z" fill="#fff"/><path d="M48 50 l-12 0" stroke="#F2B33D" stroke-width="3"/></svg>`,
+  shield:`<svg viewBox="0 0 100 100"><path d="M50 8 L86 22 Q86 70 50 92 Q14 70 14 22 Z" fill="#fff"/><path d="M50 72 L50 34 M50 72 L80 72" stroke="#3E8B2C" stroke-width="6" stroke-linecap="round" fill="none"/><path d="M50 58 a14 14 0 0 1 14 14" fill="none" stroke="#F2B33D" stroke-width="4"/><text x="58" y="48" font-size="16" font-weight="900" fill="#3E8B2C">?</text></svg>`,
+  anvil:`<svg viewBox="0 0 100 100"><path d="M18 40 h64 q0 14 -16 18 v14 h10 v10 h-52 v-10 h10 v-14 q-16 -4 -16 -18z" fill="#fff"/><path d="M60 14 l8 8 -22 22 -8 -8z" fill="#FFD166"/><line x1="64" y1="18" x2="80" y2="6" stroke="#7A4E2D" stroke-width="6" stroke-linecap="round"/><g fill="#FFD166"><circle cx="30" cy="28" r="3"/><circle cx="22" cy="34" r="2"/></g></svg>`,
+  cards:`<svg viewBox="0 0 100 100"><rect x="14" y="22" width="40" height="56" rx="7" fill="#fff" transform="rotate(-10 34 50)"/><rect x="46" y="22" width="40" height="56" rx="7" fill="#fff" opacity=".9" transform="rotate(10 66 50)"/><text x="30" y="58" font-size="22" font-weight="900" fill="#2A8FB8" transform="rotate(-10 34 50)">?</text><path d="M58 60 L72 60 L72 44" fill="none" stroke="#2A8FB8" stroke-width="4" transform="rotate(10 66 50)"/></svg>`,
+  bolt:`<svg viewBox="0 0 100 100"><circle cx="50" cy="52" r="36" fill="none" stroke="#fff" stroke-width="5"/><path d="M54 12 L30 56 H48 L42 90 L70 42 H52 Z" fill="#FFD166" stroke="#fff" stroke-width="3" stroke-linejoin="round"/></svg>`,
+  film:`<svg viewBox="0 0 100 100"><rect x="10" y="22" width="80" height="56" rx="8" fill="#fff"/><rect x="10" y="22" width="80" height="12" fill="#FFD400"/><path d="M42 44 L62 56 L42 68Z" fill="#252B3B"/><text x="16" y="32" font-size="9" font-weight="900" fill="#252B3B">REPLAY</text></svg>`,
+  hoop:`<svg viewBox="0 0 100 100"><rect x="56" y="12" width="34" height="26" rx="3" fill="none" stroke="#fff" stroke-width="4"/><ellipse cx="62" cy="42" rx="16" ry="5" fill="none" stroke="#FF8A3D" stroke-width="5"/><path d="M48 44 l4 18 h20 l4 -18" fill="none" stroke="#fff" stroke-width="2.5"/><circle cx="24" cy="70" r="14" fill="#FF8A3D" stroke="#fff" stroke-width="3"/><path d="M30 58 Q40 20 56 38" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="4 5"/></svg>`,
+  crown:`<svg viewBox="0 0 100 100"><path d="M14 72 L18 30 L36 50 L50 20 L64 50 L82 30 L86 72 Z" fill="#fff" stroke="#fff" stroke-width="3" stroke-linejoin="round"/><rect x="14" y="74" width="72" height="12" rx="4" fill="#fff"/><circle cx="50" cy="58" r="7" fill="#F0546A"/><circle cx="32" cy="62" r="5" fill="#3D8BFD"/><circle cx="68" cy="62" r="5" fill="#3CC47C"/></svg>`
+};
+
+/* ---------- rounds ---------- */
+const R = [
+ {c:'c1',e:'peach',t:'Hero Oath',tm:'6:30–6:40',hero:'Liu Bei',
+  d:'Chat + our class rules. We sign them together.',
+  n:'<b>5 分钟聊天：</b>这周学校怎么样？游泳测试了吗？<br><b>5 分钟约定：</b>点 “Show rules” 一条条翻出来；问他想不想加一条（可以用中文说，你写英文）；两人在打印的约定卡上签名，再点 “Sign”。<br><b>最后：</b>指着下面的 8 张卡给他看今天的顺序。<br>【固定结构给他安全感】'},
+ {c:'c2',e:'fan',t:'Scout Reading',tm:'6:40–6:55',hero:'Zhuge Liang',
+  d:'E-collection Level 6 · Read → Notice → Explain',
+  n:'<b>他自己挑书</b>（点书名）。Read 让他读出来；Notice 找 2 个有词尾的词；Explain 只问一句。<br><b>支持程度：</b>1 只问一句 → 2 点 “Need a frame” → 3 你示范。下面按实际点 3/2/1/0。<br><b>顺便判断级别：</b>读得轻松、也说得出主旨 → 级别可能偏低，记下来。<br>【学校 newsletter 推荐流程；384 W3 有成效的挣扎】'},
+ {c:'c3',e:'blade',t:'Word Blade',tm:'6:55–7:07',hero:'Guan Yu',
+  d:'Read long words by cutting them into parts.',
+  n:'<b>① 冷测：</b>先别点 “Cut!”。他读一个词，你点一下词：绿 = 读对，再点 = 红，再点 = 清空。分数自动算。<br><b>② 发现：</b>先问“这两个词哪里一样、哪里不一样？”让他自己说，再点 “Cut!” 看刀把词根（蓝）和后缀（橙）切开。<br><b>③ 再测：</b>点 “Retest” 清空颜色重新读，冷测分数会保留。<br>注意 explain → explan<b>ation</b>、sun → sun<b>n</b>y 拼写有变化，可以顺便问他发现了没有。<br>【学校 Cycle 4 构词法、Cycle 5 后缀 -y；老师选词，不是学校原词】'},
+ {c:'c4',e:'spear',t:'Main Idea Hunt',tm:'7:07–7:25',hero:'Zhao Yun',
+  d:'Veterans Day · paragraph 1 · find the main idea and the proof.',
+  n:'<b>用打印的晨间练习</b>（Text Structure Tuesday 第 1 段），屏幕只放问题。<br>他自己读，读不下去你读。只问 Q1；做不到 → 点 “Need a frame”（2）→ 你示范（3）。<br>Q2 一定要追问：哪一句告诉你的？让他在纸上划出来。<br>最后点开学校原题，用刚学的 explain / organization 拆开理解。<br>记录注明：这篇试课时听过一次，不算完全冷读。<br>【384 W5 Marked Pedagogies：给讲理由、用证据的机会；385 编码 0/1/2，中文转述算 2】'},
+ {c:'c5',e:'ball',t:'Time-out',tm:'7:25–7:30',hero:'Break',
+  d:'5-minute break. Take a shot!',
+  n:'点 “Start” 开始 5 分钟倒计时。他可以在球场上点击投篮（点得越高，球飞得越高）。<br>休息就是休息，不考英语。'},
+ {c:'c6',e:'bow',t:'Angle Arena',tm:'7:30–7:40',hero:'Huang Zhong',
+  d:'Language of Maths · Listen and point.',
+  n:'<b>冷测：先听后说。</b>点 “New word” 出一个词（或者你直接说）→ 他点对应的图。分数自动记“听到能指出 __ / 7”。<br><b>反过来：</b>点 “Reverse” → 屏幕随机亮一张图，他说英文词，你按 ✓ 或 ✗。<br>A–G 和打印材料第 5 页一样：A line segment · B ray · C line · D acute · E right · F obtuse · G straight。<br>【学校 Language of Maths Cycle 4】'},
+ {c:'c7',e:'shield',t:'How Do You Know?',tm:'7:40–7:50',hero:'Ma Chao',
+  d:'Turn the arm. Name the angle. Say why.',
+  n:'<b>动画环节。</b>默认隐藏角的名字：先拖动或点 ▶，停下后<b>让他先说</b>是什么角、为什么，再点 “Reveal”。<br>支持程度：3 你示范一次 → 2 句型卡（屏幕上的句子）→ 1 只问 “How do you know?”。<br>然后在家里找 3 个角，每个用句型说一遍；有量角器就一边量一边说步骤（为周日写说明文做准备）。<br>【学校原话 “How do you know?”；384：每个环节都有讲理由的机会】'},
+ {c:'c8',e:'crown',t:'Level Up',tm:'7:50–8:00',hero:'Final Round',
+  d:'See how much you grew today.',
+  n:'<b>让他看到进步</b>【385 九要素之 6】：分数自动从前面的环节带过来，也可以手动改；点 “Show my growth” 看条形图。<br><b>一句具体反馈</b>（下节课检查有没有用上）【Hattie & Timperley 过程性反馈】。<br><b>家里 10–15 分钟：</b>读一本 Level 6，录 2–3 分钟朗读发给老师。<br>课后点 “生成课堂记录” 复制到备课文件的记录表。'},
+ {deck:'bonus',c:'cb1',e:'anvil',t:'Word Forge',tm:'+8 min',hero:'Bonus 1',
+  d:'Pick a root, pick an ending, forge a new word.',
+  n:'<b>什么时候用：</b>Word Blade 做完还有时间，或者周日回忆检查后。<br><b>怎么玩：</b>他先点一个蓝色词根，再点一个橙色后缀，词会“锻造”出来并读一遍。组不成真词会抖一下，这时问他：<b>“为什么不行？”</b>（比如 quick + ation）。<br>前 7 个是今天的词，后 5 个（slow、loud、wind、cloud、luck）是<b>没教过的</b>，看方法能不能迁移。<b>周日的 -tion 迁移词（observation 等）不在这里，别提前用。</b><br>拼写变化：explain → explan-ation、sun → sunn-y，锻造时屏幕会显示。<br>最后让他挑 1 个锻造出来的词说一句话。【385 独立性：换新词；构词法 Cycle 4/5】'},
+ {deck:'bonus',c:'cb2',e:'cards',t:'Memory Match',tm:'+6 min',hero:'Bonus 2',
+  d:'Flip two cards. Find the pairs.',
+  n:'<b>两套牌：</b>Angles（词 ↔ 图）和 Words（英文词 ↔ 中文意思）。<br>翻到一对时<b>让他把英文词读出来</b>才算分，这样不只是认图，还要开口。<br>中文意思是给他的母语通道，不是翻译练习【384：撤任务支架，保留母语通道】。<br>适合放在休息后的热身、Level Up 之前，或者周日开头的回忆检查。'},
+ {deck:'bonus',c:'cb3',e:'bolt',t:'Angle Quick Draw',tm:'+5 min',hero:'Bonus 3',
+  d:'An angle flashes up. Name it before time runs out!',
+  n:'<b>快速提取练习：</b>屏幕上随机出现一个角，6 秒内点出名字。<br>每答对 3 个，会弹出 <b>“How do you know?”</b>——这时停下来，让他用句型说一遍理由再继续。不要只比速度【384：不把学习窄化成认词】。<br>适合 How Do You Know? 之后，或者周日开头检查角的词还记不记得。'},
+ {deck:'bonus',c:'cb4',e:'hoop',t:'Adverb Shot',tm:'+6 min',hero:'Bonus 4',
+  d:'quick or quickly? Choose the right word and score!',
+  n:'<b>学校 Cycle 5 正在学副词。</b>每句选 quick 还是 quickly 这类词：形容词修饰名词，副词（-ly）描述动作怎么做。<br>选对了球进框。<b>每次选完问一句：“你怎么知道的？”</b>——他可能会说“后面是动作”或“后面是东西”，中文说也算。<br>这也是周日写说明文的准备：说明文里要至少用 1 个副词。'},
+ {deck:'bonus',c:'cb5',e:'film',t:'Angle Replay',tm:'78 s',hero:'Bonus 5 · Film',
+  d:'Watch the shot. Freeze. Name the angle before the answer!',
+  n:'<b>建议周日 18:30 回忆检查时用，周六先别放</b>（短片会揭晓 4 个角的答案）。<br><b>自动暂停</b>默认打开：每次 THINK 倒计时一开始，视频就停住，等他说出<b>角的名字 + 理由</b>，再点 ▶ 继续看答案。<br>下面 4 个按钮：他自己说对了就点亮（绿），自动写进课堂记录。也可以点 “跳到定格 1–4” 重看某一个。<br>【385 撤支架后的检查：不看卡片；384：每次都说理由】'}
+];
+const isB=i=>R[i].deck==='bonus';
+const lab=i=>isB(i)?'Bonus '+(i-7):'Round '+(i+1);
+
+/* ---------- state ---------- */
+const S = (()=>{ let s={}; try{ s=JSON.parse(localStorage.getItem('hq-sat-1031')||'{}') }catch(e){}
+  return s })();
+S.sup ||= {}; S.done ||= {}; S.cold ||= {}; S.re ||= {}; S.listen ??= null; S.say ??= null; S.forge ??= null; S.mem ??= {}; S.qd ??= null; S.adv ??= null;
+function save(){ try{ localStorage.setItem('hq-sat-1031',JSON.stringify(S)) }catch(e){} }
+
+/* ---------- hub ---------- */
+const fan=document.getElementById('fan'); let sel=0, deck='main';
+const vis=()=>R.map((r,i)=>i).filter(i=>(R[i].deck||'main')===deck);
+R.forEach((r,i)=>{
+  const el=document.createElement('button');
+  el.className='card '+r.c; el.dataset.i=i;
+  el.innerHTML=`<span class="done">★</span><span class="no">${r.deck==='bonus'?'B'+(i-7):i+1}</span><div class="emb">${E[r.e]}</div><h3>${r.t}</h3><div class="tm">${r.tm}</div><div class="hero">${r.hero}</div>`;
+  el.onmouseenter=()=>select(i); el.onclick=()=>{ if(sel===i) openRound(i); else select(i) };
+  fan.appendChild(el);
+});
+function layout(){
+  const all=[...fan.children], V=vis(), n=V.length, cw=all[0].offsetWidth;
+  const step=Math.min(cw*(n<6?1.15:0.92),(innerWidth-cw-40)/Math.max(1,n-1));
+  all.forEach((c,i)=>c.classList.toggle('off',!V.includes(i)));
+  V.forEach((i,k)=>{ const c=all[i];
+    const o=k-(n-1)/2, a=o*5, y=o*o*7-(i===sel?36:0);
+    c.style.transform=`translate(${o*step}px,${y}px) rotate(${a}deg)`;
+    c.style.zIndex=i===sel?30:10+k;
+    c.classList.toggle('sel',i===sel); c.classList.toggle('isdone',!!S.done[i]);
+  });
+}
+function select(i){
+  sel=i; const r=R[sel];
+  document.getElementById('infoIc').className='ic '+r.c; document.getElementById('infoIc').innerHTML=E[r.e];
+  document.getElementById('infoT').textContent=`${lab(sel)} · ${r.t}`;
+  document.getElementById('infoD').textContent=`${r.tm} · ${r.d}`;
+  layout();
+}
+document.getElementById('goBtn').onclick=()=>openRound(sel);
+const step=d=>{ const V=vis(), k=V.indexOf(sel); select(V[(k+d+V.length)%V.length]) };
+const setDeck=d=>{ deck=d; document.querySelectorAll('.decks button').forEach(b=>b.classList.toggle('on',b.dataset.d===d));
+  document.querySelector('.top p').textContent= d==='main'?'8 rounds · 6:30 – 8:00 · pick a card':'Bonus · Word Power · use when there is extra time';
+  select(vis()[0]) };
+document.querySelectorAll('.decks button').forEach(b=>b.onclick=()=>setDeck(b.dataset.d));
+select(0); addEventListener('resize',layout);
+
+/* ---------- round shell ---------- */
+let cur=-1, cleanup=null;
+const body=document.getElementById('rBody'), notes=document.getElementById('notes');
+function openRound(i){
+  cur=i; const r=R[i]; if(cleanup){cleanup();cleanup=null}
+  document.getElementById('rIc').className='ic '+r.c; document.getElementById('rIc').innerHTML=E[r.e];
+  document.getElementById('rT').textContent=`${lab(i)} · ${r.t}`;
+  document.getElementById('rD').textContent=`${r.tm} · ${r.d}`;
+  notes.innerHTML=r.n;
+  body.innerHTML=''; body.scrollTop=0;
+  const sup=document.getElementById('sup'); sup.innerHTML='';
+  [3,2,1,0].forEach(v=>{ const b=document.createElement('button'); b.textContent=v;
+    b.classList.toggle('on',S.sup[i]===v);
+    b.onclick=()=>{ S.sup[i]=S.sup[i]===v?undefined:v; save(); [...sup.children].forEach(x=>x.classList.toggle('on',+x.textContent===S.sup[i])) };
+    sup.appendChild(b) });
+  document.getElementById('supHint').textContent= i===4?'（休息不用记）':'';
+  cleanup=BUILD[i](body)||null;
+  show('roundView');
+}
+function show(id){ document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on',v.id===id)) }
+document.getElementById('backBtn').onclick=back;
+function back(){ if(cleanup){cleanup();cleanup=null} cur=-1; show('hub'); layout() }
+document.getElementById('doneBtn').onclick=()=>{ S.done[cur]=true; save(); back(); step(1) };
+document.getElementById('notesBtn').onclick=()=>notes.classList.toggle('on');
+addEventListener('keydown',e=>{
+  if(/INPUT|TEXTAREA/.test(document.activeElement.tagName)) return;
+  if(e.key==='n'||e.key==='N'){ notes.classList.toggle('on'); return }
+  if(cur<0){
+    if(e.key==='ArrowRight') step(1);
+    if(e.key==='ArrowLeft') step(-1);
+    if(e.key==='b'||e.key==='B') setDeck(deck==='main'?'bonus':'main');
+    if(e.key==='Enter') openRound(sel);
+  } else if(e.key==='Escape') back();
+});
+const h=(html)=>{ const t=document.createElement('template'); t.innerHTML=html.trim(); return t.content.firstElementChild };
+
+/* ---------- builders ---------- */
+const BUILD=[
+/* 1 Hero Oath */
+b=>{
+  const rules=[['Try first, then ask','先自己试，再问老师'],['Your idea matters','Chinese is OK. 可以说中文'],['Phone and games away','Tablet is for E-collection only']];
+  const promises=['A break halfway','"I don\'t know yet" is OK','One thing you did well, every class'];
+  b.append(h(`<div><p class="big">Every hero team has rules. Here are ours.</p></div>`));
+  const g=h(`<div class="grid rules" style="margin:16px 0"></div>`);
+  rules.forEach(([en,zh],k)=>g.append(h(`<div class="tile rule"><h4>${k+1}. ${en}</h4><p class="small">${zh}</p></div>`)));
+  g.append(h(`<div class="tile rule"><h4>4. Your rule:</h4><input class="num" style="width:100%;text-align:left;margin-top:6px" placeholder="type here…"></div>`));
+  b.append(g);
+  b.append(h(`<p class="q" style="margin-top:6px">Teacher promises</p>`));
+  b.append(h(`<p style="font-size:20px">${promises.map(p=>'✓ '+p).join('<br>')}</p>`));
+  const row=h(`<div style="margin-top:16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><button class="btn gold">Show rules</button><button class="btn">Sign ✍</button><span></span></div>`);
+  b.append(row);
+  const [show,sign,slot]=row.children; let k=0;
+  show.onclick=()=>{ const r=g.children[k]; if(r){ r.classList.add('on'); k++ } };
+  sign.onclick=()=>{ slot.innerHTML='<span class="stamp pop">AGREED!</span>' };
+  b.append(h(`<div style="margin-top:18px"><p class="small">Today's map</p><div class="agenda">${R.map((r,i)=>`<span class="${r.c}">${i+1} ${r.t}</span>`).join('')}</div></div>`));
+},
+/* 2 Scout Reading */
+b=>{
+  const books=['Blackberries','Clever Fox','Jet Can Fly','Jolly Roger the Pirate','Josh Rides a Skateboard'];
+  b.append(h(`<p class="q">Pick your book (Level 6)</p>`));
+  const g=h(`<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin:12px 0 18px"></div>`);
+  books.forEach(t=>{ const x=h(`<button class="tile" style="color:var(--ink);font-size:19px;font-weight:800">📖<br>${t}</button>`);
+    x.onclick=()=>{ [...g.children].forEach(y=>y.classList.remove('pick')); x.classList.add('pick'); S.book=t; save() };
+    if(S.book===t) x.classList.add('pick'); g.append(x) });
+  b.append(g);
+  const steps=[
+    ['Read','Read it out loud. 读出来，卡住了先跳过，读完再回来。'],
+    ['Notice','Find 2 words with an ending: <span class="suf">-ly</span> · <span class="suf">-y</span> · <span class="suf">-ed</span> · <span class="suf">-ing</span>'],
+    ['Explain','<span class="q">What was this book mostly about?</span><br><span class="small">Then: Which sentence tells you?</span>']];
+  const box=h(`<div></div>`);
+  steps.forEach(([t,d],k)=>box.append(h(`<div class="step${k?'':' on'}"><div class="n">${k+1}</div><div><p class="q">${t}</p><p style="font-size:19px">${d}</p></div></div>`)));
+  b.append(box);
+  const fr=h(`<div class="frame hide pop">This book is mostly about <span class="blank"></span>.<br>I know because it says “<span class="blank"></span>”.</div>`);
+  const row=h(`<div style="display:flex;gap:10px;margin-top:10px"><button class="btn gold">Next step</button><button class="btn">Need a frame</button></div>`);
+  let k=0; row.children[0].onclick=()=>{ k=Math.min(k+1,2); box.children[k].classList.add('on') };
+  row.children[1].onclick=()=>fr.classList.toggle('hide');
+  b.append(row,fr);
+},
+/* 3 Word Blade */
+b=>{
+  const W=[['explain','explan','ation'],['organize','organiz','ation'],['motivate','motiv','ation'],['careful','careful','ly'],['quick','quick','ly'],['sun','sunn','y'],['rain','rain','y']];
+  const wrap=h(`<div></div>`), list=h(`<div></div>`);
+  const st={}; // key -> 0/1/2
+  W.forEach(([base,r,s],k)=>{
+    const row=h(`<div class="wrow"><div><span class="word" data-k="b${k}">${base}</span></div><div class="arrow">→</div><div><span class="word" data-k="d${k}"><span class="part r">${r}</span><span class="cut">|</span><span class="part s">${s}</span></span></div></div>`);
+    list.append(row);
+  });
+  const sc=h(`<div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-bottom:14px"><span class="score">Cold: <b id="cs">${S.cold.w??'–'}</b> / 14</span><span class="score">Now: <b id="ns">0</b> / 14</span><button class="btn gold">Cut! ⚔</button><button class="btn">Retest</button></div>`);
+  wrap.append(sc,list); b.append(wrap);
+  let phase=S.cold.w==null?'cold':'re';
+  const count=()=>Object.values(st).filter(v=>v===1).length;
+  const upd=()=>{ const n=count(); sc.querySelector('#ns').textContent=n;
+    if(phase==='cold'){ S.cold.w=n; sc.querySelector('#cs').textContent=n } else S.re.w=n; save() };
+  list.querySelectorAll('.word').forEach(w=>w.onclick=()=>{ const k=w.dataset.k; st[k]=((st[k]||0)+1)%3;
+    w.classList.toggle('ok',st[k]===1); w.classList.toggle('no',st[k]===2); upd() });
+  sc.children[2].onclick=()=>{ wrap.classList.toggle('split'); if(phase==='cold'){ phase='re' } };
+  sc.children[3].onclick=()=>{ phase='re'; for(const k in st) delete st[k]; list.querySelectorAll('.word').forEach(w=>w.classList.remove('ok','no')); upd() };
+  b.append(h(`<div class="frame" style="margin-top:16px">Long word? Find the part you know first. <span class="small">先找你认识的那部分</span></div>`));
+},
+/* 4 Main Idea Hunt */
+b=>{
+  b.append(h(`<p class="small">Use your paper: Text Structure Tuesday · Veterans Day · paragraph 1</p>`));
+  b.append(h(`<p class="q" style="margin:10px 0">Q1. What was this paragraph mostly about?</p>`));
+  const f1=h(`<div class="frame hide pop">This paragraph is mostly about <span class="blank"></span>.</div>`);
+  b.append(f1);
+  b.append(h(`<p class="q" style="margin:18px 0 10px">Q2. How do you know? Which sentence tells you?</p>`));
+  const f2=h(`<div class="frame hide pop">I know because the text says “<span class="blank"></span>”.<br>Underline it on your paper ✏️</div>`);
+  b.append(f2);
+  const row=h(`<div style="display:flex;gap:10px;margin:14px 0;flex-wrap:wrap"><button class="btn">Need a frame (Q1)</button><button class="btn">Need a frame (Q2)</button><button class="btn gold">The school question →</button></div>`);
+  row.children[0].onclick=()=>f1.classList.toggle('hide');
+  row.children[1].onclick=()=>f2.classList.toggle('hide');
+  const sq=h(`<div class="hide pop" style="margin-top:10px">
+    <p class="big">What is the <span class="word" data-w="o"><span class="part r">organiz</span><span class="cut">|</span><span class="part s">ation</span>al</span> structure of the first paragraph?</p>
+    <p style="font-size:20px;margin-top:10px">Tap the long word to cut it. <span class="small">organization = 组织方式 → 这一段是怎么组织的？</span></p>
+    <p style="font-size:20px;margin-top:8px">Hint words from Word Blade: <b class="root">explain</b> → <b class="root">explan</b><b class="suf">ation</b></p></div>`);
+  row.children[2].onclick=()=>sq.classList.toggle('hide');
+  sq.querySelector('.word').onclick=e=>e.currentTarget.parentElement.classList.toggle('split');
+  b.append(row,sq);
+},
+/* 5 Time-out */
+b=>{
+  b.append(h(`<div class="timer" id="tmr">5:00</div>`));
+  const row=h(`<div style="text-align:center;margin:8px 0"><button class="btn gold">Start</button> <span class="score">Shots: <b>0</b></span></div>`);
+  b.append(row);
+  const cv=h(`<canvas class="court"></canvas>`); b.append(cv);
+  b.append(h(`<p class="small" style="text-align:center">Click on the court to shoot · higher click = higher shot</p>`));
+  let left=300, iv=null, raf=0, made=0;
+  const tm=b.querySelector('#tmr');
+  row.children[0].onclick=()=>{ if(iv) return; iv=setInterval(()=>{ left=Math.max(0,left-1); tm.textContent=`${Math.floor(left/60)}:${String(left%60).padStart(2,'0')}`; if(!left){clearInterval(iv);iv=null;tm.textContent='Time!'} },1000) };
+  const ctx=cv.getContext('2d'); let W,H,ball=null;
+  const size=()=>{ const r=cv.getBoundingClientRect(); W=cv.width=r.width*devicePixelRatio; H=cv.height=r.height*devicePixelRatio };
+  size();
+  cv.onclick=e=>{ if(ball) return; const r=cv.getBoundingClientRect(); const ty=(e.clientY-r.top)*devicePixelRatio;
+    const hx=W*.82, hy=H*.32, x0=W*.12, y0=H*.82;
+    const peak=Math.min(ty, hy-20*devicePixelRatio);       // apex height
+    const g=1600*devicePixelRatio;
+    const vy=-Math.sqrt(2*g*Math.max(10,y0-peak));
+    const tUp=-vy/g, drop=Math.max(0,hy-peak), tDown=Math.sqrt(2*drop/g);
+    const vx=(hx-x0)/(tUp+tDown);
+    ball={x:x0,y:y0,vx,vy,g,t:0,good:Math.abs(peak-(hy-H*.22))<H*.14} };
+  const draw=dt=>{ ctx.clearRect(0,0,W,H); const d=devicePixelRatio;
+    ctx.strokeStyle='rgba(255,255,255,.25)'; ctx.lineWidth=3*d; ctx.beginPath(); ctx.moveTo(0,H*.86); ctx.lineTo(W,H*.86); ctx.stroke();
+    ctx.fillStyle='#fff'; ctx.fillRect(W*.88,H*.12,6*d,H*.74); ctx.fillRect(W*.86,H*.16,6*d,H*.2);
+    ctx.strokeStyle='#FF8A3D'; ctx.lineWidth=5*d; ctx.beginPath(); ctx.moveTo(W*.78,H*.32); ctx.lineTo(W*.86,H*.32); ctx.stroke();
+    if(ball){ ball.vy+=ball.g*dt; ball.x+=ball.vx*dt; ball.y+=ball.vy*dt;
+      ctx.fillStyle='#FF8A3D'; ctx.beginPath(); ctx.arc(ball.x,ball.y,16*d,0,7); ctx.fill();
+      if(ball.y>H*1.1||ball.x>W*1.05){ if(ball.good){ made++; row.querySelector('b').textContent=made } ball=null } }
+    else { ctx.fillStyle='#FF8A3D'; ctx.beginPath(); ctx.arc(W*.12,H*.82,16*d,0,7); ctx.fill() } };
+  let last=performance.now(); const loop=t=>{ draw(Math.min(.04,(t-last)/1000)); last=t; raf=requestAnimationFrame(loop) }; raf=requestAnimationFrame(loop);
+  addEventListener('resize',size);
+  return ()=>{ clearInterval(iv); cancelAnimationFrame(raf); removeEventListener('resize',size) };
+},
+/* 6 Angle Arena */
+b=>{
+  const F=[['line segment','<line x1="20" y1="60" x2="140" y2="60"/><circle cx="20" cy="60" r="5" fill="#fff"/><circle cx="140" cy="60" r="5" fill="#fff"/>'],
+           ['ray','<line x1="20" y1="60" x2="135" y2="60"/><circle cx="20" cy="60" r="5" fill="#fff"/><path d="M146 60 l-14 -8 v16z" fill="#fff"/>'],
+           ['line','<line x1="24" y1="60" x2="136" y2="60"/><path d="M146 60 l-14 -8 v16z" fill="#fff"/><path d="M14 60 l14 -8 v16z" fill="#fff"/>'],
+           ['acute angle','<polyline points="140,90 30,90 112,30" fill="none"/>'],
+           ['right angle','<polyline points="140,95 40,95 40,15" fill="none"/><rect x="40" y="77" width="18" height="18" fill="none" stroke-width="3"/>'],
+           ['obtuse angle','<polyline points="150,90 70,90 20,30" fill="none"/>'],
+           ['straight angle','<line x1="15" y1="80" x2="145" y2="80"/><circle cx="80" cy="80" r="5" fill="#fff"/><path d="M60 80 a20 20 0 0 1 40 0" fill="none" stroke="#F2B33D" stroke-width="3"/>']];
+  b.append(h(`<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:12px"><button class="btn gold">New word 🔊</button><button class="btn">Reverse ↔</button><span class="say"></span><span class="score" style="margin-left:auto">Heard: <b>0</b> / 7</span></div>`));
+  const ctl=b.lastChild, say=ctl.querySelector('.say'), out=ctl.querySelector('b');
+  const g=h(`<div class="grid figs"></div>`);
+  F.forEach(([n,svg],k)=>g.append(h(`<button class="tile fig" data-k="${k}"><span class="lt">${'ABCDEFG'[k]}</span><svg viewBox="0 0 160 110" stroke="#fff" stroke-width="5" stroke-linecap="round">${svg}</svg></button>`)));
+  b.append(g);
+  const rv=h(`<div class="hide" style="margin-top:14px;display:flex;gap:10px;align-items:center"><span class="q">What is this called?</span><button class="btn" style="background:var(--green)">✓ said it</button><button class="btn" style="background:var(--red)">✗ not yet</button><span class="score">Said: <b>0</b> / 7</span></div>`);
+  b.append(rv);
+  let pool=[...F.keys()], target=-1, heard=new Set(), tried=new Set(), mode='listen', saidPool=[], said=0, sTarget=-1;
+  const speak=t=>{ try{ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(t); u.lang='en-US'; u.rate=.85; speechSynthesis.speak(u) }catch(e){} };
+  const clear=()=>g.querySelectorAll('.fig').forEach(f=>f.classList.remove('right','wrong','glow'));
+  ctl.children[0].onclick=()=>{ mode='listen'; rv.classList.add('hide'); clear();
+    const rest=pool.filter(k=>!tried.has(k)); if(!rest.length){ say.textContent='All done! '+heard.size+' / 7'; return }
+    target=rest[Math.floor(Math.random()*rest.length)]; say.textContent='Point to the '+F[target][0]; say.classList.remove('pop'); void say.offsetWidth; say.classList.add('pop'); speak('Point to the '+F[target][0]) };
+  g.querySelectorAll('.fig').forEach(f=>f.onclick=()=>{ if(mode!=='listen'||target<0) return; const k=+f.dataset.k;
+    if(k===target){ f.classList.add('right'); if(!tried.has(k)) heard.add(k); tried.add(k); target=-1; out.textContent=heard.size; S.listen=heard.size; save() }
+    else { f.classList.remove('wrong'); void f.offsetWidth; f.classList.add('wrong'); tried.add(target) } });
+  const nextSay=()=>{ clear(); const rest=saidPool; if(!rest.length){ say.textContent='Finished: '+said+' / 7'; sTarget=-1; return }
+    sTarget=rest.splice(Math.floor(Math.random()*rest.length),1)[0]; g.children[sTarget].classList.add('glow'); say.textContent='' };
+  ctl.children[1].onclick=()=>{ mode='say'; rv.classList.remove('hide'); saidPool=[...F.keys()]; said=0; rv.querySelector('b').textContent=0; nextSay() };
+  rv.children[1].onclick=()=>{ if(sTarget<0) return; said++; rv.querySelector('b').textContent=said; S.say=said; save(); say.textContent=F[sTarget][0]; setTimeout(nextSay,900) };
+  rv.children[2].onclick=()=>{ if(sTarget<0) return; say.textContent=F[sTarget][0]; speak(F[sTarget][0]); setTimeout(nextSay,1400) };
+  return ()=>{ try{speechSynthesis.cancel()}catch(e){} };
+},
+/* 7 How Do You Know? */
+b=>{
+  b.append(h(`<div class="dial">
+    <svg viewBox="-170 -170 340 340" id="dsvg">
+      <circle r="150" fill="rgba(255,255,255,.04)" stroke="rgba(255,255,255,.12)" stroke-width="2"/>
+      <g stroke="rgba(255,255,255,.25)" stroke-width="2">${[...Array(12)].map((_,k)=>`<line x1="140" x2="150" transform="rotate(${-k*30})"/>`).join('')}</g>
+      <path id="arc" fill="rgba(242,179,61,.28)" stroke="#F2B33D" stroke-width="3"/>
+      <rect id="sq" x="0" y="-26" width="26" height="26" fill="none" stroke="#F2B33D" stroke-width="3"/>
+      <line x1="0" y1="0" x2="140" y2="0" stroke="#fff" stroke-width="7" stroke-linecap="round"/>
+      <g id="arm"><line x1="0" y1="0" x2="140" y2="0" stroke="#4FA3F2" stroke-width="7" stroke-linecap="round"/><circle cx="140" cy="0" r="16" fill="#FF8A3D" stroke="#fff" stroke-width="3"/></g>
+      <circle r="8" fill="#fff"/>
+    </svg>
+    <div>
+      <div class="deg" id="dg">45°</div>
+      <div class="aname" id="an">?</div>
+      <input type="range" min="0" max="360" value="45" id="rg">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0">
+        <button class="btn gold" id="play">▶ Sweep</button><button class="btn" id="rev">Reveal</button><button class="btn" id="hideDeg">Hide °</button>
+        ${[30,90,135,180,360].map(v=>`<button class="btn" data-v="${v}">${v}°</button>`).join('')}
+      </div>
+      <div class="frame" id="fr">It is <span class="blank" id="fa"></span> because it is <span class="blank" id="fb"></span>.</div>
+    </div></div>`));
+  b.append(h(`<div style="margin-top:16px"><p class="q">Angle hunt at home 🏠</p><div class="grid" style="grid-template-columns:repeat(3,1fr);margin-top:8px">${['a book corner','a door','an open notebook'].map(t=>`<button class="tile" style="color:var(--ink);font-size:18px" onclick="this.classList.toggle('pick')">☐ ${t}</button>`).join('')}</div></div>`));
+  const $=id=>b.querySelector('#'+id); let a=45, shown=false, degHidden=false, raf=0;
+  const name=d=> d===0?['a zero angle','0 degrees'] : d<90?['an acute angle','less than 90 degrees'] : d===90?['a right angle','exactly 90 degrees'] :
+    d<180?['an obtuse angle','more than 90 and less than 180 degrees'] : d===180?['a straight angle','exactly 180 degrees'] :
+    d<360?['a reflex angle','more than 180 degrees'] : ['a full angle','360 degrees, a full turn'];
+  const draw=()=>{ const r=a*Math.PI/180, R2=60, x=R2*Math.cos(r), y=-R2*Math.sin(r);
+    $('arm').setAttribute('transform',`rotate(${-a})`);
+    $('arc').setAttribute('d', a>=360?`M${R2} 0 A${R2} ${R2} 0 1 0 ${-R2} 0 A${R2} ${R2} 0 1 0 ${R2} 0Z`:`M0 0 L${R2} 0 A${R2} ${R2} 0 ${a>180?1:0} 0 ${x.toFixed(2)} ${y.toFixed(2)}Z`);
+    $('sq').style.display=a===90?'':'none';
+    $('dg').textContent=degHidden?'?°':a+'°'; $('rg').value=a;
+    const [n,why]=name(a); $('an').textContent=shown?n.replace(/^an? /,'').replace(/^./,c=>c.toUpperCase()):'?';
+    $('fa').textContent=shown?n:''; $('fb').textContent=shown?why:'' };
+  const setA=v=>{ a=Math.max(0,Math.min(360,Math.round(v))); draw() };
+  $('rg').oninput=e=>{ shown=false; setA(+e.target.value) };
+  $('rev').onclick=()=>{ shown=true; draw(); $('an').classList.remove('pop'); void $('an').offsetWidth; $('an').classList.add('pop') };
+  $('hideDeg').onclick=()=>{ degHidden=!degHidden; $('hideDeg').textContent=degHidden?'Show °':'Hide °'; draw() };
+  b.querySelectorAll('[data-v]').forEach(x=>x.onclick=()=>{ cancelAnimationFrame(raf); tween(+x.dataset.v) });
+  const tween=to=>{ shown=false; const from=a, t0=performance.now(), dur=900;
+    const step=t=>{ const p=Math.min(1,(t-t0)/dur), e=1-Math.pow(1-p,3); setA(from+(to-from)*e); if(p<1) raf=requestAnimationFrame(step) }; raf=requestAnimationFrame(step) };
+  $('play').onclick=()=>{ cancelAnimationFrame(raf); const stops=[0,45,90,135,180,270,360]; let i=0; shown=false; setA(0);
+    const next=()=>{ if(++i>=stops.length) return; shown=false; const from=a,to=stops[i],t0=performance.now();
+      const step=t=>{ const p=Math.min(1,(t-t0)/1100), e=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2; setA(from+(to-from)*e);
+        if(p<1) raf=requestAnimationFrame(step); else raf=setTimeout(()=>{ raf=requestAnimationFrame(()=>next()) },1400) };
+      raf=requestAnimationFrame(step) };
+    raf=setTimeout(next,600) };
+  draw();
+  return ()=>{ cancelAnimationFrame(raf); clearTimeout(raf) };
+},
+/* 8 Level Up */
+b=>{
+  const rows=[['Word Blade · cold','cw',S.cold.w,14,'#FF8A3D'],['Word Blade · now','rw',S.re.w,14,'#3CC47C'],['Angles · heard','ls',S.listen,7,'#4FA3F2'],['Angles · said','sy',S.say,7,'#A77BEA']];
+  b.append(h(`<p class="q" style="margin-bottom:14px">Look how you grew today 🚀</p>`));
+  const bars=h(`<div class="bars"></div>`);
+  rows.forEach(([l,k,v,max,c])=>{ bars.append(h(`<span>${l}</span>`)); bars.append(h(`<div class="bar"><i style="background:${c}" data-max="${max}"></i></div>`)); bars.append(h(`<input class="num" data-k="${k}" value="${v??''}" placeholder="–">`)) });
+  b.append(bars);
+  const grow=()=>bars.querySelectorAll('.bar i').forEach((i,k)=>{ const v=+bars.querySelectorAll('.num')[k].value||0; i.style.width=Math.min(100,v/ +i.dataset.max*100)+'%' });
+  b.append(h(`<div style="margin:14px 0"><button class="btn gold" id="gw">Show my growth</button></div>`));
+  b.querySelector('#gw').onclick=grow;
+  bars.querySelectorAll('.num').forEach(n=>n.oninput=()=>{ const v=n.value===''?null:+n.value; ({cw:()=>S.cold.w=v,rw:()=>S.re.w=v,ls:()=>S.listen=v,sy:()=>S.say=v})[n.dataset.k](); save() });
+  b.append(h(`<div class="frame">My hero move for next time: <b>Long word? Find the part you know first.</b></div>`));
+  b.append(h(`<p style="font-size:19px;margin:12px 0">🏠 Home quest (10–15 min): read one Level 6 book · record 2–3 minutes · send it to your teacher.</p>`));
+  const rec=h(`<div style="margin-top:12px"><button class="btn">生成课堂记录（老师用）</button><textarea class="hide" style="margin-top:8px"></textarea></div>`);
+  rec.children[0].onclick=()=>{ const t=rec.children[1]; t.classList.remove('hide');
+    const sl=i=>S.sup[i]??'__';
+    t.value=`2026-10-31 周六 · Student D\n| 任务 | 编码 / 结果 | 支持程度 |\n|---|---|---|\n| Level 6：读 + 主旨 | 书：${S.book||'____'} | ${sl(1)} |\n| 构词冷测 → 再测 | ${S.cold.w??'__'} / 14 → ${S.re.w??'__'} / 14 | ${sl(2)} |\n| Veterans Day 第 1 段：主旨 + 证据 | 0/1/2：__（试课听过） | ${sl(3)} |\n| 角和线：听到能指出 | ${S.listen??'__'} / 7 | ${sl(5)} |\n| 角和线：自己说出 | ${S.say??'__'} / 7 | ${sl(5)} |\n| How do you know?（说理由） | 句子 __ 个 | ${sl(6)} |\n课堂约定支持程度：${sl(0)}；收尾：${sl(7)}\nBonus：Word Forge 锻造 ${S.forge??'__'} / 12（新词 ${S.forgeNew??'__'} / 5，支持 ${sl(8)}）｜Memory Match ${Object.entries(S.mem).map(([k,v])=>k+' '+v+' 步').join('，')||'__'}｜Angle Quick Draw 最高连对 ${S.qd??'__'}（支持 ${sl(10)}）｜Adverb Shot ${S.adv??'__'} / 8（支持 ${sl(11)}）\n角度短片：自己说对 ${S.filmSaid?S.filmSaid.filter(Boolean).length:'__'} / 4（支持 ${sl(12)}）`;
+    t.select(); try{ navigator.clipboard.writeText(t.value) }catch(e){} };
+  b.append(rec);
+  setTimeout(grow,300);
+},
+/* B1 Word Forge */
+b=>{
+  const roots=['explain','organize','motivate','careful','quick','sun','rain','slow','loud','wind','cloud','luck'];
+  const sufs=['ation','ly','y'];
+  const OK={'explain+ation':['explan','ation'],'organize+ation':['organiz','ation'],'motivate+ation':['motiv','ation'],
+    'careful+ly':['careful','ly'],'quick+ly':['quick','ly'],'slow+ly':['slow','ly'],'loud+ly':['loud','ly'],
+    'sun+y':['sunn','y'],'rain+y':['rain','y'],'wind+y':['wind','y'],'cloud+y':['cloud','y'],'luck+y':['luck','y']};
+  const NEW=['slow','loud','wind','cloud','luck'];
+  b.append(h(`<p class="q">1. Pick a root <span class="small">词根</span></p>`));
+  const rc=h(`<div class="chips" style="margin:8px 0 14px"></div>`); b.append(rc);
+  b.append(h(`<p class="q">2. Pick an ending <span class="small">后缀</span></p>`));
+  const sc=h(`<div class="chips" style="margin:8px 0"></div>`); b.append(sc);
+  const anv=h(`<div class="anvil"><span class="small" style="font-size:18px">⚒ your new word appears here</span></div>`); b.append(anv);
+  const sco=h(`<div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap"><span class="score">Forged: <b>0</b> / 12</span><span class="small">新词（没教过）：<b>0</b> / 5</span></div>`); b.append(sco);
+  const got=h(`<div class="forged" style="margin-top:10px"></div>`); b.append(got);
+  b.append(h(`<div class="frame" style="margin-top:14px">Use one in a sentence: <span class="blank"></span></div>`));
+  const done=new Set(); let r=null;
+  const speak=t=>{ try{ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(t); u.lang='en-US'; u.rate=.85; speechSynthesis.speak(u) }catch(e){} };
+  roots.forEach(w=>{ const c=h(`<button class="chip">${w}</button>`); c.onclick=()=>{ [...rc.children].forEach(x=>x.classList.remove('pick')); c.classList.add('pick'); r=w; anv.innerHTML=`<span class="root">${w}</span><span class="small" style="font-size:30px">+ ?</span>` }; rc.append(c) });
+  sufs.forEach(sf=>{ const c=h(`<button class="chip s">-${sf}</button>`); c.onclick=()=>{
+    if(!r) return; const k=r+'+'+sf, ok=OK[k];
+    if(!ok){ anv.innerHTML=`<span class="root">${r}</span><span class="suf">${sf}</span><span style="font-size:28px">🤔 Is that a word?</span>`; anv.classList.remove('bad'); void anv.offsetWidth; anv.classList.add('bad'); return }
+    anv.innerHTML=`<span class="root pop">${ok[0]}</span><span class="suf pop">${ok[1]}</span>`; speak(ok[0]+ok[1]);
+    if(!done.has(k)){ done.add(k); got.append(h(`<span class="pop">${ok[0]+ok[1]}</span>`)); [...rc.children].find(x=>x.textContent===r).classList.add('used') }
+    S.forge=done.size; S.forgeNew=[...done].filter(x=>NEW.includes(x.split('+')[0])).length; save();
+    sco.querySelector('b').textContent=S.forge; sco.querySelectorAll('b')[1].textContent=S.forgeNew }; sc.append(c) });
+  return ()=>{ try{speechSynthesis.cancel()}catch(e){} };
+},
+/* B2 Memory Match */
+b=>{
+  const FIG={'line segment':'<line x1="20" y1="60" x2="140" y2="60"/><circle cx="20" cy="60" r="5" fill="#fff"/><circle cx="140" cy="60" r="5" fill="#fff"/>',
+    'ray':'<line x1="20" y1="60" x2="135" y2="60"/><circle cx="20" cy="60" r="5" fill="#fff"/><path d="M146 60 l-14 -8 v16z" fill="#fff"/>',
+    'acute angle':'<polyline points="140,90 30,90 112,30" fill="none"/>',
+    'right angle':'<polyline points="140,95 40,95 40,15" fill="none"/><rect x="40" y="77" width="18" height="18" fill="none" stroke-width="3"/>',
+    'obtuse angle':'<polyline points="150,90 70,90 20,30" fill="none"/>',
+    'straight angle':'<line x1="15" y1="80" x2="145" y2="80"/><circle cx="80" cy="80" r="5" fill="#fff"/><path d="M60 80 a20 20 0 0 1 40 0" fill="none" stroke="#F2B33D" stroke-width="3"/>'};
+  const WORDS=[['explain','解释'],['organization','组织方式'],['paragraph','段落'],['evidence','证据'],['main idea','主要内容'],['carefully','仔细地']];
+  const top=h(`<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px"><button class="btn gold" data-s="angles">Angles</button><button class="btn" data-s="words">Words</button><span class="score" style="margin-left:auto">Pairs: <b>0</b> / 6 · Moves: <b>0</b></span></div>`);
+  const grid=h(`<div class="mem"></div>`); b.append(top,grid);
+  const say=h(`<p class="say" style="margin-top:12px;text-align:center"></p>`); b.append(say);
+  let set='angles';
+  const deal=()=>{ grid.innerHTML=''; say.textContent=''; let pairs=0, moves=0, open=[], lock=false;
+    const [pb,mb]=top.querySelectorAll('b'); pb.textContent=0; mb.textContent=0;
+    const items=set==='angles'?Object.keys(FIG).flatMap(w=>[[w,w,'w'],[w,FIG[w],'f']]):WORDS.flatMap(([e,z])=>[[e,e,'w'],[e,z,'z']]);
+    items.sort(()=>Math.random()-.5);
+    items.forEach(([key,face,kind])=>{
+      const inner=kind==='f'?`<svg viewBox="0 0 160 110" stroke="#fff" stroke-width="5" stroke-linecap="round">${face}</svg>`:`<span style="${kind==='z'?'font-size:24px':''}">${face}</span>`;
+      const c=h(`<div class="mc"><div class="bk">?</div><div class="fr">${inner}</div></div>`); c.dataset.key=key;
+      c.onclick=()=>{ if(lock||c.classList.contains('up')||c.classList.contains('got')) return; c.classList.add('up'); open.push(c);
+        if(open.length===2){ moves++; mb.textContent=moves; lock=true; const [x,y]=open;
+          if(x.dataset.key===y.dataset.key){ setTimeout(()=>{ x.classList.add('got'); y.classList.add('got'); pairs++; pb.textContent=pairs;
+              say.textContent='Say it: '+x.dataset.key+' 🔊'; open=[]; lock=false; if(pairs===6){ S.mem[set]=moves; save(); say.textContent='All pairs! '+moves+' moves 🎉' } },400) }
+          else setTimeout(()=>{ x.classList.remove('up'); y.classList.remove('up'); open=[]; lock=false },900) } };
+      grid.append(c) }) };
+  top.querySelectorAll('[data-s]').forEach(x=>x.onclick=()=>{ set=x.dataset.s; top.querySelectorAll('[data-s]').forEach(y=>y.classList.toggle('gold',y===x)); deal() });
+  deal();
+},
+/* B3 Angle Quick Draw */
+b=>{
+  const names=['acute','right','obtuse','straight'];
+  b.append(h(`<div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap"><button class="btn gold">Start ⚡</button><span class="score">Streak: <b>0</b></span><span class="score">Best: <b>${S.qd??0}</b></span></div>`));
+  const [go,st,bs]=[b.lastChild.children[0],b.lastChild.querySelectorAll('b')[0],b.lastChild.querySelectorAll('b')[1]];
+  const sv=h(`<svg viewBox="-160 -40 320 190" style="width:100%;max-height:36vh;display:block;margin:10px auto"><g transform="translate(0 130)"><path class="arc" fill="rgba(242,179,61,.28)" stroke="#F2B33D" stroke-width="3"/><line x1="0" y1="0" x2="140" y2="0" stroke="#fff" stroke-width="7" stroke-linecap="round"/><g class="arm"><line x1="0" y1="0" x2="140" y2="0" stroke="#4FA3F2" stroke-width="7" stroke-linecap="round"/></g><circle r="7" fill="#fff"/></g></svg>`);
+  b.append(sv);
+  const tb=h(`<div class="tbar"><i></i></div>`); b.append(tb);
+  const qa=h(`<div class="qa">${names.map(n=>`<button>${n}</button>`).join('')}</div>`); b.append(qa);
+  const why=h(`<div class="frame hide pop" style="margin-top:14px;display:block">⭐ How do you know? <br>It is a/an <span class="blank"></span> angle because <span class="blank"></span>. <button class="btn gold" style="margin-left:10px">Go on →</button></div>`); b.append(why);
+  let ans=null, streak=0, t0=0, raf=0, live=false, cur=0;
+  const kind=a=>a<90?'acute':a===90?'right':a<180?'obtuse':'straight';
+  const pickA=()=>{ const r=Math.random(); return r<.3?20+Math.floor(Math.random()*60):r<.5?90:r<.8?100+Math.floor(Math.random()*70):180 };
+  const setArm=a=>{ cur=a; sv.querySelector('.arm').setAttribute('transform',`rotate(${-a})`); const R2=50,x=R2*Math.cos(a*Math.PI/180),y=-R2*Math.sin(a*Math.PI/180);
+    sv.querySelector('.arc').setAttribute('d',`M0 0 L${R2} 0 A${R2} ${R2} 0 0 0 ${x.toFixed(1)} ${y.toFixed(1)}Z`) };
+  const next=()=>{ qa.querySelectorAll('button').forEach(x=>x.classList.remove('right','wrong')); const to=pickA(); ans=kind(to);
+    const from=cur, s=performance.now(); const anim=t=>{ const p=Math.min(1,(t-s)/450); setArm(Math.round(from+(to-from)*(1-Math.pow(1-p,3)))); if(p<1) raf=requestAnimationFrame(anim); else { t0=performance.now(); live=true; raf=requestAnimationFrame(tick) } };
+    raf=requestAnimationFrame(anim) };
+  const tick=t=>{ const left=1-(t-t0)/6000; tb.firstChild.style.width=Math.max(0,left*100)+'%'; if(left<=0){ live=false; streak=0; st.textContent=0; qa.querySelectorAll('button').forEach(x=>{ if(x.textContent===ans) x.classList.add('right') }); setTimeout(next,1200); return } if(live) raf=requestAnimationFrame(tick) };
+  qa.querySelectorAll('button').forEach(x=>x.onclick=()=>{ if(!live) return;
+    if(x.textContent===ans){ live=false; x.classList.add('right'); streak++; st.textContent=streak; if(streak>(S.qd??0)){ S.qd=streak; bs.textContent=streak; save() }
+      if(streak%3===0){ why.classList.remove('hide') } else setTimeout(next,700) }
+    else { x.classList.remove('wrong'); void x.offsetWidth; x.classList.add('wrong'); streak=0; st.textContent=0 } });
+  why.querySelector('button').onclick=()=>{ why.classList.add('hide'); next() };
+  go.onclick=()=>{ cancelAnimationFrame(raf); streak=0; st.textContent=0; why.classList.add('hide'); next() };
+  setArm(45);
+  return ()=>cancelAnimationFrame(raf);
+},
+/* B4 Adverb Shot */
+b=>{
+  const Q=[['He runs','quick','quickly',1,' down the court.'],['Zhao Yun is a','brave','bravely',0,' hero.'],['She shoots the ball','careful','carefully',1,'.'],
+    ['It is a','sunny','sunnily',0,' day for basketball.'],['The fox moves','slow','slowly',1,' through the trees.'],['Read the question','careful','carefully',1,' first.'],
+    ['That was a','loud','loudly',0,' cheer!'],['Guan Yu','quick','quickly',1,' cuts the long word.']];
+  b.append(h(`<div style="display:flex;gap:16px;align-items:center"><span class="score">Score: <b>0</b> / 8</span><span class="small" id="qn">1 / 8</span></div>`));
+  const sb=b.lastChild.querySelector('b'), qn=b.lastChild.querySelector('#qn');
+  const sent=h(`<p class="sent"></p>`); b.append(sent);
+  const qa=h(`<div class="qa" style="grid-template-columns:1fr 1fr"></div>`); b.append(qa);
+  const cv=h(`<canvas style="width:100%;height:28vh;display:block;margin-top:10px"></canvas>`); b.append(cv);
+  const why=h(`<p class="frame hide pop" style="display:block;margin-top:10px">How do you know? <span class="small">后面是动作，还是东西？</span> <button class="btn gold" style="margin-left:10px">Next →</button></p>`); b.append(why);
+  const ctx=cv.getContext('2d'); let W,H,i=0,score=0,ball=null,raf=0,first=true;
+  const size=()=>{ const r=cv.getBoundingClientRect(); W=cv.width=r.width*devicePixelRatio; H=cv.height=r.height*devicePixelRatio }; size();
+  const show=()=>{ const [a,x,y,k,c]=Q[i]; first=true; why.classList.add('hide'); qn.textContent=(i+1)+' / 8';
+    sent.innerHTML=`${a} <span class="gap">?</span>${c}`; qa.innerHTML=''; [x,y].forEach((w,j)=>{ const bt=h(`<button>${w}</button>`);
+      bt.onclick=()=>{ if(!why.classList.contains('hide')) return;
+        if(j===k){ bt.classList.add('right'); sent.querySelector('.gap').textContent=w; if(first){ score++; sb.textContent=score; S.adv=score; save() } ball={t:0,make:true}; why.classList.remove('hide') }
+        else { first=false; bt.classList.remove('wrong'); void bt.offsetWidth; bt.classList.add('wrong'); ball={t:0,make:false} } }; qa.append(bt) }) };
+  why.querySelector('button').onclick=()=>{ i++; if(i>=Q.length){ sent.innerHTML=`🏆 ${score} / 8 — Great shooting!`; qa.innerHTML=''; why.classList.add('hide'); return } show() };
+  const draw=()=>{ const d=devicePixelRatio; ctx.clearRect(0,0,W,H);
+    const hx=W*.8, hy=H*.3; ctx.fillStyle='#fff'; ctx.fillRect(hx+W*.05,H*.05,5*d,H*.9);
+    ctx.strokeStyle='#FF8A3D'; ctx.lineWidth=5*d; ctx.beginPath(); ctx.moveTo(hx-W*.04,hy); ctx.lineTo(hx+W*.04,hy); ctx.stroke();
+    let bx=W*.12, by=H*.8;
+    if(ball){ ball.t+=.018; const p=Math.min(1,ball.t), tx=ball.make?hx:hx+W*.07, ty=ball.make?hy:hy-H*.05;
+      bx=W*.12+(tx-W*.12)*p; by=H*.8+(ty-H*.8)*p-Math.sin(p*Math.PI)*H*.55; if(ball.make&&p>=1) by=hy+(ball.t-1)*H*2;
+      if(ball.t>1.4) ball=null }
+    ctx.fillStyle='#FF8A3D'; ctx.beginPath(); ctx.arc(bx,by,14*d,0,7); ctx.fill(); raf=requestAnimationFrame(draw) };
+  raf=requestAnimationFrame(draw); show(); addEventListener('resize',size);
+  return ()=>{ cancelAnimationFrame(raf); removeEventListener('resize',size) };
+},
+/* B5 Angle Replay film */
+b=>{
+  const STOP=[10.5,24.5,40.5,55.3], JUMP=[5.6,19.5,37.5,49.8], NAMES=['Straight 平角','Right 直角','Obtuse 钝角','Acute 锐角'];
+  const v=h(`<video class="film" src="2026-11-01_角度回放短片.mp4" controls playsinline preload="auto"></video>`); b.append(v);
+  const bar=h(`<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px"><button class="btn gold">▶ / ❚❚</button><label class="small" style="display:flex;gap:6px;align-items:center"><input type="checkbox" checked> 倒计时自动暂停</label><span class="small">跳到定格：</span>${[1,2,3,4].map(n=>`<button class="btn" data-j="${n-1}">${n}</button>`).join('')}</div>`); b.append(bar);
+  const said=S.filmSaid||[0,0,0,0];
+  const row=h(`<div style="margin-top:14px"><p class="q" style="font-size:22px">He said it himself 自己说对了：<b class="score"><b>${said.filter(Boolean).length}</b> / 4</b></p><div class="qa" style="grid-template-columns:repeat(4,1fr)">${NAMES.map((n,i)=>`<button class="fzb${said[i]?' got':''}" data-k="${i}">${n}</button>`).join('')}</div></div>`); b.append(row);
+  const auto=bar.querySelector('input'), done=new Set(); let raf=0;
+  bar.children[0].onclick=()=>{ v.paused?v.play():v.pause() };
+  bar.querySelectorAll('[data-j]').forEach(x=>x.onclick=()=>{ const i=+x.dataset.j; v.currentTime=JUMP[i]; for(let k=i;k<4;k++) done.delete(k); v.play() });
+  v.addEventListener('seeked',()=>STOP.forEach((t,i)=>{ if(v.currentTime<t-.05) done.delete(i) }));
+  const tick=()=>{ if(auto.checked&&!v.paused) STOP.forEach((t,i)=>{ if(!done.has(i)&&v.currentTime>=t&&v.currentTime<t+.6){ done.add(i); v.pause() } }); raf=requestAnimationFrame(tick) };
+  raf=requestAnimationFrame(tick);
+  row.querySelectorAll('.fzb').forEach(x=>x.onclick=()=>{ const i=+x.dataset.k; said[i]=said[i]?0:1; x.classList.toggle('got',!!said[i]); S.filmSaid=said; save(); row.querySelector('b b').textContent=said.filter(Boolean).length });
+  return ()=>{ cancelAnimationFrame(raf); v.pause() };
+}
+];
+</script>
+</body>
+</html>
